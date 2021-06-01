@@ -14,6 +14,7 @@ type News struct {
 
 type NewsRequest struct {
 	Count int
+	Find string
 }
 
 func newsHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,8 +28,14 @@ func newsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	fmt.Println(requestBody.Count)
+	fmt.Println(requestBody.Find)
 
-	result, err := db.Query("select title, link from news limit $1", requestBody.Count)
+	requestBody.Find = fmt.Sprintf("%%%s%%", requestBody.Find)
+	fmt.Println(requestBody.Find)
+	result, err := db.Query("select title, link from news where lower(title) like lower($2) limit $1",
+		requestBody.Count,
+		requestBody.Find)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)

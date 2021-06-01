@@ -25,5 +25,6 @@ GET http://localhost:8080/api/news
 Content-Type: application/json
 
 {
-"count": 5
+  "count": 5,
+  "find": "Man"
 }
