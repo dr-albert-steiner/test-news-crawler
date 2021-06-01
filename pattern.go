@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
+var patterns map[int64]string
+var patternMutex sync.Mutex
+
 func patternHandler(w http.ResponseWriter, r *http.Request) {
+	patternMutex.Lock()
+	defer patternMutex.Unlock()
 	switch r.Method {
 	case "GET":
 		getPattern(w)
@@ -20,33 +26,10 @@ func patternHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type RegexPattern struct {
-	Pattern string
-}
+
 
 func getPattern(w http.ResponseWriter){
-	result, err := db.Query("select pattern from patterns")
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusNotFound)
-	}
-	defer func() {
-		err = result.Close()
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}()
-	var patternsList []RegexPattern
-	for result.Next() {
-		pattern := RegexPattern{}
-		err := result.Scan(&pattern.Pattern)
-		if err != nil{
-			log.Println(err)
-			continue
-		}
-		patternsList = append(patternsList, pattern)
-	}
-	jsonData, err := json.Marshal(patternsList)
+	jsonData, err := json.Marshal(patterns)
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -59,29 +42,74 @@ func getPattern(w http.ResponseWriter){
 }
 
 func postPattern(w http.ResponseWriter, r *http.Request){
-	var newPattern RegexPattern
+	var newPattern string
 	err := decodeJSON(r.Body, &newPattern)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	_, err = db.Exec("insert into patterns (pattern) values ($1)", newPattern.Pattern)
+
+	for _, item := range patterns {
+		if item == newPattern {
+			http.Error(w, "Pattern is already exists", http.StatusNotFound)
+			return
+		}
+	}
+
+	result, err := db.Exec("insert into patterns (pattern) values ($1)", newPattern)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
+
+	rowID, _ := result.LastInsertId()
+	patterns[rowID] = newPattern
 }
 
 func deletePattern(w http.ResponseWriter, r *http.Request) {
-	var patternToDelete RegexPattern
+	var patternToDelete string
 	err := decodeJSON(r.Body, &patternToDelete)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	_, err = db.Exec("delete from patterns where pattern = $1", patternToDelete.Pattern)
+	result, err := db.Exec("delete from patterns where pattern = $1", patternToDelete)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	rowID, _ := result.LastInsertId()
+	delete(patterns, rowID)
+}
+
+func fetchPatterns(){
+	if db == nil {
+		panic("Database is not connected")
+	}
+
+	rows, err := db.Query("select id, pattern from patterns")
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}()
+	patterns = make(map[int64]string)
+	for rows.Next() {
+		var pattern string
+		var id int64
+		err := rows.Scan(&id, &pattern)
+		if err != nil{
+			log.Println(err)
+			continue
+		}
+		patterns[id] = pattern
 	}
 }
