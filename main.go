@@ -7,6 +7,9 @@ import (
 )
 
 func main() {
+	connectDB()
+	defer disconnectDB()
+
 	http.HandleFunc("/api/news", newsHandler)
 	http.HandleFunc("/api/url", urlHandler)
 	http.HandleFunc("/api/pattern", patternHandler)
