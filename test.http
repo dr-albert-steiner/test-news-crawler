@@ -19,3 +19,11 @@ Content-Type: application/json
 {
 "url": "https://www.yahoo.com/news/rss"
 }
+
+###
+GET http://localhost:8080/api/news
+Content-Type: application/json
+
+{
+"count": 5
+}
