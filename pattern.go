@@ -11,6 +11,10 @@ import (
 var patterns map[int64]string
 var patternMutex sync.Mutex
 
+type PatternRequest struct {
+	Pattern string
+}
+
 func patternHandler(w http.ResponseWriter, r *http.Request) {
 	patternMutex.Lock()
 	defer patternMutex.Unlock()
@@ -42,7 +46,7 @@ func getPattern(w http.ResponseWriter){
 }
 
 func postPattern(w http.ResponseWriter, r *http.Request){
-	var newPattern string
+	var newPattern PatternRequest
 	err := decodeJSON(r.Body, &newPattern)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -50,13 +54,13 @@ func postPattern(w http.ResponseWriter, r *http.Request){
 	}
 
 	for _, item := range patterns {
-		if item == newPattern {
+		if item == newPattern.Pattern {
 			http.Error(w, "Pattern is already exists", http.StatusNotFound)
 			return
 		}
 	}
 
-	result, err := db.Exec("insert into patterns (pattern) values ($1)", newPattern)
+	result, err := db.Exec("insert into patterns (pattern) values ($1)", newPattern.Pattern)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -64,17 +68,17 @@ func postPattern(w http.ResponseWriter, r *http.Request){
 	}
 
 	rowID, _ := result.LastInsertId()
-	patterns[rowID] = newPattern
+	patterns[rowID] = newPattern.Pattern
 }
 
 func deletePattern(w http.ResponseWriter, r *http.Request) {
-	var patternToDelete string
+	var patternToDelete PatternRequest
 	err := decodeJSON(r.Body, &patternToDelete)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	result, err := db.Exec("delete from patterns where pattern = $1", patternToDelete)
+	result, err := db.Exec("delete from patterns where pattern = $1", patternToDelete.Pattern)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
