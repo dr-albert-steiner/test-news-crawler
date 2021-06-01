@@ -1,0 +1,21 @@
+POST http://localhost:8080/api/url
+Content-Type: application/json
+
+{
+  "url": "https://www.yahoo.com/news/rss"
+}
+
+###
+
+GET http://localhost:8080/api/url
+Content-Type: application/json
+
+{}
+
+###
+DELETE http://localhost:8080/api/url
+Content-Type: application/json
+
+{
+"url": "https://www.yahoo.com/news/rss"
+}

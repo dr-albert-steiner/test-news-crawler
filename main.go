@@ -23,28 +23,3 @@ func newsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("news GET")
 }
 
-func urlHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		fmt.Println("URLs GET")
-	case "POST":
-		fmt.Println("URLs POST")
-	case "DELETE":
-		fmt.Println("URLs DELETE")
-	default:
-		http.Error(w, fmt.Sprintf("Method %s is not supported", r.Method), http.StatusNotFound)
-	}
-}
-
-func patternHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		fmt.Println("patterns GET")
-	case "POST":
-		fmt.Println("patterns POST")
-	case "DELETE":
-		fmt.Println("patterns DELETE")
-	default:
-		http.Error(w, fmt.Sprintf("Method %s is not supported", r.Method), http.StatusNotFound)
-	}
-}
