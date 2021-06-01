@@ -11,6 +11,10 @@ import (
 var urls map[int64]string
 var urlMutex sync.Mutex
 
+type URLRequest struct {
+	URL string
+}
+
 func urlHandler(w http.ResponseWriter, r *http.Request) {
 	urlMutex.Lock()
 	defer urlMutex.Unlock()
@@ -40,7 +44,7 @@ func getURL(w http.ResponseWriter){
 }
 
 func postURL(w http.ResponseWriter, r *http.Request) {
-	var rssURL string
+	var rssURL URLRequest
 	err := decodeJSON(r.Body, &rssURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -48,30 +52,30 @@ func postURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, item := range urls {
-		if item == rssURL {
+		if item == rssURL.URL {
 			http.Error(w, "URL already exists", http.StatusNotFound)
 			return
 		}
 	}
 
-	result, err := db.Exec("insert into urls (url) values ($1)", rssURL)
+	result, err := db.Exec("insert into urls (url) values ($1)", rssURL.URL)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	rowID, _ := result.LastInsertId()
-	urls[rowID] = rssURL
+	urls[rowID] = rssURL.URL
 }
 
 func deleteURL(w http.ResponseWriter, r *http.Request){
-	var rssURL string
+	var rssURL URLRequest
 	err := decodeJSON(r.Body, &rssURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	result, err := db.Exec("delete from urls where url = $1", rssURL)
+	result, err := db.Exec("delete from urls where url = $1", rssURL.URL)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)

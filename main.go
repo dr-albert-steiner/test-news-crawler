@@ -30,11 +30,11 @@ func fetchData(){
 }
 
 func runTicker(target func ()){
-	seconds, err := time.ParseDuration(os.Getenv("TIMER"))
+	timer, err := time.ParseDuration(os.Getenv("TIMER"))
 	if err != nil {
 		panic(err.Error())
 	}
-	ticker := time.NewTicker(time.Second * seconds)
+	ticker := time.NewTicker(timer)
 
 	for range ticker.C {
 		target()
