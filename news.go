@@ -28,11 +28,8 @@ func newsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	fmt.Println(requestBody.Count)
-	fmt.Println(requestBody.Find)
 
 	requestBody.Find = fmt.Sprintf("%%%s%%", requestBody.Find)
-	fmt.Println(requestBody.Find)
 	result, err := db.Query("select title, link from news where lower(title) like lower($2) limit $1",
 		requestBody.Count,
 		requestBody.Find)
